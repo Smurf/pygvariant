@@ -72,3 +72,22 @@ class GVariantValueConverter:
                 return value
 
         return value
+
+# --- Usage Example ---
+converter = GVariantValueConverter()
+
+# 1. Parsing a complex tuple
+val1 = converter.parse_value_string("(true, 42, 'hello')", "(bis)")
+print(f"Tuple: {val1} | Types: {[type(x) for x in val1]}")
+
+# 2. Parsing an array of integers
+val2 = converter.parse_value_string("[1, 2, 3, 4]", "ai")
+print(f"Array: {val2} | Inner Type: {type(val2[0])}")
+
+# 3. Parsing a dictionary
+val3 = converter.parse_value_string("{'key1': 1.5, 'key2': 3.0}", "a{sd}")
+print(f"Dict:  {val3}")
+
+# 4. Parsing a 'Maybe' type
+val4 = converter.parse_value_string("nothing", "ms")
+print(f"Maybe: {val4}")

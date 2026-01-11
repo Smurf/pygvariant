@@ -83,3 +83,18 @@ class dict_entry(typing.Generic[T, U]):
 
 def parse_gvariant_type(type_string: str):
     return GVariantParser().parse(type_string)
+
+# --- Examples ---
+if __name__ == "__main__":
+    examples = [
+        "i",            # Integer
+        "ai",           # Array of integers
+        "(is)",         # Tuple of (int, string)
+        "a{sd}",        # Dictionary (Array of dict entries: string -> double)
+        "m(ni)",        # Maybe tuple
+        "aaaaai",       # Deeply nested array
+        "(ui(nq((y)))s)", # Complex nested tuple
+    ]
+
+    for ex in examples:
+        print(f"String: {ex:15} -> Python Type: {parse_gvariant_type(ex)}")

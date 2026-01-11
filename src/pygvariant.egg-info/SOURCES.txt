@@ -1,0 +1,11 @@
+LICENSE.md
+README.md
+pyproject.toml
+src/pygvariant/GVariantConverter.py
+src/pygvariant/GVariantParser.py
+src/pygvariant/GVariantSerializer.py
+src/pygvariant/__init__.py
+src/pygvariant.egg-info/PKG-INFO
+src/pygvariant.egg-info/SOURCES.txt
+src/pygvariant.egg-info/dependency_links.txt
+src/pygvariant.egg-info/top_level.txt
