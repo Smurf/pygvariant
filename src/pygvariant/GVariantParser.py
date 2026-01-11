@@ -25,75 +25,55 @@ class GVariantParser:
 
     def __init__(self):
         self._it = None
+        self._peeked = None # Buffer for peeking
 
     def parse(self, type_str: str) -> Any:
-        """Entry point for parsing a GVariant type string."""
         self._it = iter(type_str)
+        self._peeked = None 
         try:
             result = self._parse_one()
-            # Check if there is trailing data
-            try:
-                next(self._it)
+            if self._peek() is not None:
                 raise ValueError("Trailing characters in type string")
-            except StopIteration:
-                return result
+            return result
         except StopIteration:
             raise ValueError("Unexpected end of type string")
 
+    def _next(self):
+        """Consumes and returns the next character."""
+        if self._peeked is not None:
+            char = self._peeked
+            self._peeked = None
+            return char
+        return next(self._it)
+
+    def _peek(self):
+        """Look at the next character without consuming it."""
+        if self._peeked is None:
+            try:
+                self._peeked = next(self._it)
+            except StopIteration:
+                return None
+        return self._peeked
+
     def _parse_one(self) -> Any:
-        char = next(self._it)
+        char = self._next() # Use the new helper
 
         if char in self.BASIC_TYPES:
             return self.BASIC_TYPES[char]
 
-        if char == 'a': # Array
+        if char == 'a': 
             inner_type = self._parse_one()
-            # Special case: Array of Dict Entries 'a{kv}' is a Python Dict
             if getattr(inner_type, "__origin__", None) is dict_entry:
                 return Dict[inner_type.__args__[0], inner_type.__args__[1]]
             return List[inner_type]
 
-        if char == 'm': # Maybe
-            return Optional[self._parse_one()]
-
-        if char == '(': # Tuple
+        if char == '(':
             types = []
-            while True:
-                peek = self._peek()
-                if peek == ')':
-                    next(self._it) # Consume ')'
-                    break
+            while self._peek() != ')': # Peek check
                 types.append(self._parse_one())
+            self._next() # Consume ')'
             return Tuple[tuple(types)] if types else Tuple[()]
 
-        if char == '{': # Dictionary Entry
-            key_type = self._parse_one()
-            # Validation: GVariant requires the key to be a basic type
-            if key_type not in self.BASIC_TYPES.values() and key_type is not Any:
-                raise ValueError(f"Dictionary key must be a basic type, not {key_type}")
-            
-            value_type = self._parse_one()
-            
-            if next(self._it) != '}':
-                raise ValueError("Expected '}' at end of dict entry")
-            
-            # We use a custom Generic to represent the entry itself
-            return dict_entry[key_type, value_type]
-
-        raise ValueError(f"Unknown type character: {char}")
-
-    def _peek(self):
-        """Look at the next character without consuming it."""
-        try:
-            self._peeked = next(self._it)
-            self._it = self._combine_peek()
-            return self._peeked
-        except StopIteration:
-            return None
-
-    def _combine_peek(self):
-        yield self._peeked
-        yield from self._it
 
 # Helper for internal dictionary entry representation
 T = typing.TypeVar("T")
