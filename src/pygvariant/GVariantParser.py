@@ -33,7 +33,6 @@ class GVariantParser:
         try:
             result = self._parse_one()
             if self._peek() is not None:
-                print(f"Typestr: {type_str}")
                 raise ValueError("Trailing characters in type string")
             return result
         except StopIteration:
@@ -73,12 +72,11 @@ class GVariantParser:
             return List[inner_type]
 
         if char == '{':
-            print("FOUND DICT")
             key = self._parse_one()
             val = self._parse_one()
-            print(f"Key {key}, Val {val}")
-            self._next()
-            return Dict[key, val]
+            if self._next() != '}':
+                raise ValueError("Expected '}' to close dictionary type")
+            return dict_entry[key, val]
             
         if char == '(':
             types = []
