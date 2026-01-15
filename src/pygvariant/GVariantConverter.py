@@ -13,7 +13,6 @@ class GVariantValueConverter:
         """
         # 1. Get the target Python type representation
         target_type = self.parser.parse(type_str)
-        
         # 2. Safely evaluate the string into a basic Python structure
         # Note: GVariant 'true'/'false' matches Python 'True'/'False'
         # but we lowercase them for literal_eval compatibility if needed.
