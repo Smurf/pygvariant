@@ -60,6 +60,10 @@ class GVariantParser:
 
         if char in self.BASIC_TYPES:
             return self.BASIC_TYPES[char]
+        
+        if char == 'm':
+            maybe_type = self._parse_one()
+            return Optional[maybe_type]
 
         if char == 'a': 
             inner_type = self._parse_one()
@@ -67,6 +71,13 @@ class GVariantParser:
                 return Dict[inner_type.__args__[0], inner_type.__args__[1]]
             return List[inner_type]
 
+        if char == '{':
+            key = self._parse_one()
+            val = self._parse_one()
+            if self._next() != '}':
+                raise ValueError("Expected '}' to close dictionary type")
+            return dict_entry[key, val]
+            
         if char == '(':
             types = []
             while self._peek() != ')': # Peek check

@@ -1,19 +1,35 @@
 import ast
 from typing import get_origin, get_args, Union, Any, List, Tuple, Dict, Optional
 from . import GVariantParser
-
+import re
 class GVariantValueConverter:
     def __init__(self, parser=None):
         self.parser = parser or GVariantParser()
 
+    def _preprocess_value(self, value_str: str) -> str:
+        """
+        Transforms a GVariant text format string into a Python-compatible
+        literal string.
+        """
+        # Replace GVariant keywords with Python equivalents
+        s = value_str.replace('true', 'True').replace('false', 'False')
+        if s.lower() == 'nothing':
+            return 'None'
+
+        # Remove variant markers < >
+        # This won't work for very complex types but ya know...
+        while re.search(r'<[^<>]*>', s):
+            s = re.sub(r'<([^<>]*)>', r'\1', s)
+        
+        return s
     def parse_value_string(self, value_str: str, type_str: str) -> Any:
         """
         Parses a string representation of data into Python objects 
         based on a GVariant type string.
         """
+        value_str = self._preprocess_value(value_str)
         # 1. Get the target Python type representation
         target_type = self.parser.parse(type_str)
-        
         # 2. Safely evaluate the string into a basic Python structure
         # Note: GVariant 'true'/'false' matches Python 'True'/'False'
         # but we lowercase them for literal_eval compatibility if needed.
