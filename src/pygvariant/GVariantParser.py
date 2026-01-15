@@ -66,19 +66,19 @@ class GVariantParser:
             maybe_type = self._parse_one()
             return Optional[maybe_type]
 
-        if char == 'a': 
+        if char == 'a':
             inner_type = self._parse_one()
+            # This is the special case for dictionary arrays `a{...}`
             if getattr(inner_type, "__origin__", None) is dict_entry:
                 return Dict[inner_type.__args__[0], inner_type.__args__[1]]
             return List[inner_type]
 
         if char == '{':
-            print("FOUND DICT")
             key = self._parse_one()
             val = self._parse_one()
-            print(f"Key {key}, Val {val}")
-            self._next()
-            return Dict[key, val]
+            if self._next() != '}':
+                raise ValueError("Expected '}' to close dictionary type")
+            return dict_entry[key, val]
             
         if char == '(':
             types = []
