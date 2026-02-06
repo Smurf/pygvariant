@@ -18,6 +18,9 @@ class GVariantParser:
         'o': str,   # Object Path
         'g': str,   # Signature
         '?': Union[str, int, float, bool], # Any basic type
+    }
+
+    OTHER_TYPES = {
         'v': Any,   # Variant
         '*': Any,   # Any type
         'r': Tuple[Any, ...], # Any tuple
@@ -55,12 +58,18 @@ class GVariantParser:
                 return None
         return self._peeked
 
-    def _parse_one(self) -> Any:
+    def _parse_one(self, basic_only=False) -> Any:
         char = self._next() # Use the new helper
 
         if char in self.BASIC_TYPES:
             return self.BASIC_TYPES[char]
         
+        if basic_only:
+            raise ValueError(f"Expected basic type, got {char}")
+
+        if char in self.OTHER_TYPES:
+            return self.OTHER_TYPES[char]
+
         if char == 'm':
             maybe_type = self._parse_one()
             return Optional[maybe_type]
@@ -72,7 +81,7 @@ class GVariantParser:
             return List[inner_type]
 
         if char == '{':
-            key = self._parse_one()
+            key = self._parse_one(basic_only=True)
             val = self._parse_one()
             if self._next() != '}':
                 raise ValueError("Expected '}' to close dictionary type")
@@ -84,6 +93,8 @@ class GVariantParser:
                 types.append(self._parse_one())
             self._next() # Consume ')'
             return Tuple[tuple(types)] if types else Tuple[()]
+
+        raise ValueError(f"Unknown GVariant type character: {char}")
 
 
 # Helper for internal dictionary entry representation
